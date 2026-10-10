@@ -1,5 +1,6 @@
 // Game state
 let score = 0;
+let lives = 3;
 let gameActive = false;
 let isPaused = false;
 let audioContext = null;
@@ -15,9 +16,18 @@ let spawnInterval = 1500; // milliseconds
 // DOM elements
 const startScreen = document.getElementById('start-screen');
 const gameScreen = document.getElementById('game-screen');
+const gameOverScreen = document.getElementById('game-over-screen');
 const gameArea = document.getElementById('game-area');
 const scoreDisplay = document.getElementById('score');
+const livesDisplay = document.getElementById('lives');
+const finalScoreDisplay = document.getElementById('final-score');
+const newHighScoreMessage = document.getElementById('new-high-score-message');
+const initialsPrompt = document.getElementById('initials-prompt');
+const initialsInput = document.getElementById('initials-input');
+const submitInitialsButton = document.getElementById('submit-initials');
+const leaderboardList = document.getElementById('leaderboard-list');
 const playButton = document.getElementById('play-button');
+const playAgainButton = document.getElementById('play-again-button');
 const muteButton = document.getElementById('mute-button');
 const pauseButton = document.getElementById('pause-button');
 
@@ -53,7 +63,7 @@ function playPopSound() {
     oscillator.frequency.setValueAtTime(800, now);
     oscillator.frequency.exponentialRampToValueAtTime(200, now + 0.1);
     
-    gainNode.gain.setValueAtValue(0.3, now);
+    gainNode.gain.setValueAtTime(0.3, now);
     gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
     
     oscillator.start(now);
@@ -212,6 +222,156 @@ function updateScore() {
     setTimeout(() => scoreDisplay.classList.remove('bump'), 300);
 }
 
+// Update lives display
+function updateLives() {
+    livesDisplay.textContent = lives;
+    livesDisplay.classList.add('bump');
+    setTimeout(() => livesDisplay.classList.remove('bump'), 300);
+}
+
+// Load high scores from localStorage
+function loadHighScores() {
+    try {
+        const stored = localStorage.getItem('balloonPop.highScores');
+        if (!stored) return [];
+        const scores = JSON.parse(stored);
+        if (!Array.isArray(scores)) return [];
+        return scores.filter(entry =>
+            entry &&
+            typeof entry.initials === 'string' &&
+            typeof entry.score === 'number' &&
+            entry.score > 0
+        ).sort((a, b) => b.score - a.score).slice(0, 5);
+    } catch (e) {
+        console.error('Error loading high scores:', e);
+        return [];
+    }
+}
+
+// Save high scores to localStorage
+function saveHighScores(scores) {
+    try {
+        localStorage.setItem('balloonPop.highScores', JSON.stringify(scores));
+    } catch (e) {
+        console.error('Error saving high scores:', e);
+    }
+}
+
+// Check if score qualifies for leaderboard
+function isQualifyingScore(score) {
+    if (score <= 0) return false;
+    const highScores = loadHighScores();
+    if (highScores.length < 5) return true;
+    return score > highScores[highScores.length - 1].score;
+}
+
+// Add score to leaderboard
+function addToLeaderboard(initials, score) {
+    const highScores = loadHighScores();
+    highScores.push({ initials: initials.toUpperCase(), score });
+    highScores.sort((a, b) => b.score - a.score);
+    const trimmed = highScores.slice(0, 5);
+    saveHighScores(trimmed);
+    return trimmed;
+}
+
+// Display leaderboard
+function displayLeaderboard(highlightScore = null) {
+    const highScores = loadHighScores();
+    leaderboardList.innerHTML = '';
+
+    if (highScores.length === 0) {
+        leaderboardList.innerHTML = '<p style="color: #666; font-style: italic;">No scores yet!</p>';
+        return;
+    }
+
+    highScores.forEach((entry, index) => {
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'leaderboard-entry';
+
+        if (highlightScore !== null &&
+            entry.score === highlightScore &&
+            !entryDiv.classList.contains('highlight')) {
+            entryDiv.classList.add('highlight');
+            highlightScore = null; // Only highlight first match
+        }
+
+        entryDiv.innerHTML = `
+            <span class="leaderboard-entry-rank">#${index + 1}</span>
+            <span class="leaderboard-entry-initials">${entry.initials}</span>
+            <span class="leaderboard-entry-score">${entry.score}</span>
+        `;
+
+        leaderboardList.appendChild(entryDiv);
+    });
+}
+
+// Show game over screen
+function showGameOver() {
+    gameActive = false;
+    finalScoreDisplay.textContent = score;
+
+    if (isQualifyingScore(score)) {
+        newHighScoreMessage.style.display = 'block';
+        initialsPrompt.style.display = 'flex';
+        initialsInput.value = '';
+        initialsInput.focus();
+        displayLeaderboard();
+    } else {
+        newHighScoreMessage.style.display = 'none';
+        initialsPrompt.style.display = 'none';
+        displayLeaderboard();
+    }
+
+    gameScreen.style.display = 'none';
+    gameOverScreen.style.display = 'flex';
+}
+
+// Submit initials
+function submitInitials() {
+    const initials = initialsInput.value.trim().toUpperCase();
+
+    if (initials.length !== 3) {
+        alert('Please enter exactly 3 letters');
+        return;
+    }
+
+    if (!/^[A-Z]{3}$/.test(initials)) {
+        alert('Please enter only letters');
+        return;
+    }
+
+    addToLeaderboard(initials, score);
+    displayLeaderboard(score);
+    initialsPrompt.style.display = 'none';
+}
+
+// Play again
+function playAgain() {
+    // Reset game state
+    score = 0;
+    lives = 3;
+    balloons = [];
+    spawnTimer = 0;
+    isPaused = false;
+    gameActive = true;
+
+    // Clear game area
+    gameArea.innerHTML = '';
+
+    // Update displays
+    updateScore();
+    updateLives();
+
+    // Hide game over, show game screen
+    gameOverScreen.style.display = 'none';
+    gameScreen.style.display = 'block';
+
+    // Start game loop
+    lastTime = performance.now();
+    requestAnimationFrame(gameLoop);
+}
+
 // Game loop
 function gameLoop(timestamp) {
     if (!gameActive || isPaused) {
@@ -231,21 +391,29 @@ function gameLoop(timestamp) {
     }
     
     // Update balloon positions
-    balloons.forEach(balloon => {
+    for (let i = balloons.length - 1; i >= 0; i--) {
+        const balloon = balloons[i];
         if (!balloon.popped) {
             balloon.y += balloon.speed * (deltaTime / 1000);
             balloon.element.style.bottom = balloon.y + 'px';
-            
-            // Remove if off screen
+
+            // Check if balloon escaped (costs a life)
             if (balloon.y > window.innerHeight + balloon.size) {
                 balloon.element.remove();
-                const index = balloons.indexOf(balloon);
-                if (index > -1) {
-                    balloons.splice(index, 1);
+                balloons.splice(i, 1);
+
+                // Lose a life
+                lives--;
+                updateLives();
+
+                // Check for game over
+                if (lives <= 0) {
+                    showGameOver();
+                    return;
                 }
             }
         }
-    });
+    }
     
     requestAnimationFrame(gameLoop);
 }
@@ -253,21 +421,23 @@ function gameLoop(timestamp) {
 // Start game
 function startGame() {
     initAudio();
-    
+
     score = 0;
+    lives = 3;
     balloons = [];
     spawnTimer = 0;
     isPaused = false;
     gameActive = true;
-    
+
     updateScore();
-    
+    updateLives();
+
     startScreen.style.display = 'none';
     gameScreen.style.display = 'block';
-    
+
     // Clear any existing balloons
     gameArea.innerHTML = '';
-    
+
     lastTime = performance.now();
     requestAnimationFrame(gameLoop);
 }
@@ -306,8 +476,22 @@ window.addEventListener('resize', () => {
 
 // Event listeners
 playButton.addEventListener('click', startGame);
+playAgainButton.addEventListener('click', playAgain);
 pauseButton.addEventListener('click', togglePause);
 muteButton.addEventListener('click', toggleMute);
+submitInitialsButton.addEventListener('click', submitInitials);
+
+// Allow Enter key to submit initials
+initialsInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        submitInitials();
+    }
+});
+
+// Only allow letters in initials input
+initialsInput.addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/[^A-Za-z]/g, '').toUpperCase();
+});
 
 // Prevent context menu on long press
 document.addEventListener('contextmenu', (e) => {
