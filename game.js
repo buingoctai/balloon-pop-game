@@ -297,7 +297,7 @@ function displayLeaderboard(highlightScore = null) {
     leaderboardList.innerHTML = '';
 
     if (highScores.length === 0) {
-        leaderboardList.innerHTML = '<p style="color: #666; font-style: italic;">No scores yet!</p>';
+        leaderboardList.innerHTML = `<p style="color: #666; font-style: italic;">${t('noScoresYet')}</p>`;
         return;
     }
 
@@ -348,12 +348,12 @@ function submitInitials() {
     const initials = initialsInput.value.trim().toUpperCase();
 
     if (initials.length !== 3) {
-        alert('Please enter exactly 3 letters');
+        alert(t('alertExactly3Letters'));
         return;
     }
 
     if (!/^[A-Z]{3}$/.test(initials)) {
-        alert('Please enter only letters');
+        alert(t('alertOnlyLetters'));
         return;
     }
 
@@ -487,7 +487,7 @@ function togglePause() {
 // Toggle mute
 function toggleMute() {
     isMuted = !isMuted;
-    muteButton.textContent = isMuted ? '🔇 Sound OFF' : '🔊 Sound ON';
+    muteButton.textContent = isMuted ? t('soundOff') : t('soundOn');
 }
 
 // Handle page visibility

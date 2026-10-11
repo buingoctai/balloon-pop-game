@@ -1,45 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Balloon Pop!</title>
+    <title>Bắn Bóng Bay!</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="start-screen">
-        <h1>🎈 Balloon Pop! 🎈</h1>
-        <button id="play-button">PLAY</button>
-        <button id="mute-button">🔊 Sound ON</button>
+        <h1 data-i18n="title">🎈 Bắn Bóng Bay! 🎈</h1>
+        <button id="play-button" data-i18n="play">CHƠI</button>
+        <button id="mute-button" data-i18n="soundOn">🔊 Bật Âm Thanh</button>
     </div>
-    
+
     <div id="game-screen" style="display: none;">
         <div id="score-bar">
-            <div id="score-display">Score: <span id="score">0</span></div>
-            <div id="lives-display">Lives: <span id="lives">3</span></div>
-            <div id="timer-display">Time: <span id="timer">60</span></div>
+            <div id="score-display"><span data-i18n="score">Điểm:</span> <span id="score">0</span></div>
+            <div id="lives-display"><span data-i18n="lives">Mạng:</span> <span id="lives">3</span></div>
+            <div id="timer-display"><span data-i18n="time">Thời gian:</span> <span id="timer">60</span></div>
             <button id="pause-button">⏸️</button>
         </div>
         <div id="game-area"></div>
     </div>
 
     <div id="game-over-screen" style="display: none;">
-        <h1>Game Over!</h1>
-        <div id="final-score-display">Final Score: <span id="final-score">0</span></div>
-        <div id="new-high-score-message" style="display: none;">🎉 New High Score! 🎉</div>
+        <h1 data-i18n="gameOver">Kết Thúc!</h1>
+        <div id="final-score-display"><span data-i18n="finalScore">Điểm Cuối:</span> <span id="final-score">0</span></div>
+        <div id="new-high-score-message" style="display: none;" data-i18n="newHighScore">🎉 Kỷ Lục Mới! 🎉</div>
         <div id="initials-prompt" style="display: none;">
-            <p>Enter your initials:</p>
-            <input type="text" id="initials-input" maxlength="3" placeholder="ABC" />
-            <button id="submit-initials">Submit</button>
+            <p data-i18n="enterInitials">Nhập tên viết tắt:</p>
+            <input type="text" id="initials-input" maxlength="3" placeholder="ABC" data-i18n-placeholder="initialsPlaceholder" />
+            <button id="submit-initials" data-i18n="submit">Gửi</button>
         </div>
         <div id="leaderboard">
-            <h2>Top 5 High Scores</h2>
+            <h2 data-i18n="topScores">Top 5 Điểm Cao</h2>
             <div id="leaderboard-list"></div>
         </div>
-        <button id="play-again-button">Play Again</button>
+        <button id="play-again-button" data-i18n="playAgain">Chơi Lại</button>
     </div>
 
+    <script src="i18n.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
