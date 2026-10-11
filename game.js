@@ -8,6 +8,8 @@ let isMuted = false;
 let balloons = [];
 let lastTime = 0;
 let spawnTimer = 0;
+let gameTimer = 60; // 60-second countdown
+let gameTimerMs = 0; // millisecond accumulator for timer
 
 // Game settings that ramp up with score
 let baseSpeed = 60; // pixels per second
@@ -20,6 +22,8 @@ const gameOverScreen = document.getElementById('game-over-screen');
 const gameArea = document.getElementById('game-area');
 const scoreDisplay = document.getElementById('score');
 const livesDisplay = document.getElementById('lives');
+const timerDisplay = document.getElementById('timer');
+const timerDisplayContainer = document.getElementById('timer-display');
 const finalScoreDisplay = document.getElementById('final-score');
 const newHighScoreMessage = document.getElementById('new-high-score-message');
 const initialsPrompt = document.getElementById('initials-prompt');
@@ -229,6 +233,18 @@ function updateLives() {
     setTimeout(() => livesDisplay.classList.remove('bump'), 300);
 }
 
+// Update timer display
+function updateTimer() {
+    timerDisplay.textContent = gameTimer;
+    
+    // Add warning class when time is low (<=10s)
+    if (gameTimer <= 10) {
+        timerDisplayContainer.classList.add('timer-warning');
+    } else {
+        timerDisplayContainer.classList.remove('timer-warning');
+    }
+}
+
 // Load high scores from localStorage
 function loadHighScores() {
     try {
@@ -351,6 +367,8 @@ function playAgain() {
     // Reset game state
     score = 0;
     lives = 3;
+    gameTimer = 60;
+    gameTimerMs = 0;
     balloons = [];
     spawnTimer = 0;
     isPaused = false;
@@ -362,6 +380,7 @@ function playAgain() {
     // Update displays
     updateScore();
     updateLives();
+    updateTimer();
 
     // Hide game over, show game screen
     gameOverScreen.style.display = 'none';
@@ -382,6 +401,20 @@ function gameLoop(timestamp) {
     
     const deltaTime = timestamp - lastTime;
     lastTime = timestamp;
+    
+    // Update game timer (deltaTime-based countdown)
+    gameTimerMs += deltaTime;
+    if (gameTimerMs >= 1000) {
+        gameTimer--;
+        gameTimerMs -= 1000;
+        updateTimer();
+        
+        // Check if time ran out
+        if (gameTimer <= 0) {
+            showGameOver();
+            return;
+        }
+    }
     
     // Spawn balloons
     spawnTimer += deltaTime;
@@ -424,6 +457,8 @@ function startGame() {
 
     score = 0;
     lives = 3;
+    gameTimer = 60;
+    gameTimerMs = 0;
     balloons = [];
     spawnTimer = 0;
     isPaused = false;
@@ -431,6 +466,7 @@ function startGame() {
 
     updateScore();
     updateLives();
+    updateTimer();
 
     startScreen.style.display = 'none';
     gameScreen.style.display = 'block';

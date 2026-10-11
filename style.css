@@ -83,16 +83,29 @@ body {
     flex-wrap: wrap;
 }
 
-#score-display, #lives-display {
+#score-display, #lives-display, #timer-display {
     font-size: clamp(1.2rem, 4vw, 1.5rem);
     font-weight: bold;
     color: #333;
 }
 
-#score, #lives {
+#score, #lives, #timer {
     color: #FF1493;
     display: inline-block;
     transition: transform 0.2s;
+}
+
+#timer-display.timer-warning {
+    animation: timerWarning 1s infinite;
+}
+
+#timer-display.timer-warning #timer {
+    color: #FF0000;
+}
+
+@keyframes timerWarning {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }
 
 #score.bump {
@@ -310,7 +323,7 @@ body {
         gap: 10px;
     }
 
-    #score-display, #lives-display {
+    #score-display, #lives-display, #timer-display {
         font-size: 1.2rem;
     }
 
